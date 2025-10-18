@@ -1,0 +1,15 @@
+{
+	"id": "78ab84b1-b615-405e-b2ee-7558e92979bb",
+	"name": "Reqres_Env",
+	"values": [
+		{
+			"key": "base_url",
+			"value": "",
+			"type": "default",
+			"enabled": true
+		}
+	],
+	"_postman_variable_scope": "environment",
+	"_postman_exported_at": "2025-10-16T21:07:47.094Z",
+	"_postman_exported_using": "Postman/11.67.4"
+}

@@ -1,0 +1,11 @@
+{
+  "login": {
+    "email": "user@test.com",
+    "password": "password123"
+  },
+  "form": {
+    "first_name": "Ayoub",
+    "last_name": "Bentalia",
+    "email": "ayoub@example.com"
+  }
+}
