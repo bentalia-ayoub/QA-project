@@ -4,49 +4,25 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                echo '📦 Clonage du dépôt...'
-                checkout scm
+                git branch: 'main', url: 'https://github.com/bentalia-ayoub/QA-project.git'
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                echo '⚙️ Installation des dépendances Maven...'
-                dir('Phase3_Tests_API/restassured_scripts') {
-                    sh 'mvn clean install -DskipTests'
-                }
-            }
-        }
-
-        stage('Run REST Assured Tests') {
-            steps {
-                echo '🧪 Exécution des tests REST Assured...'
-                dir('Phase3_Tests_API/restassured_scripts') {
-                    sh 'mvn test'
-                }
-            }
-            post {
-                always {
-                    junit '**/target/surefire-reports/*.xml'
-                }
+                sh 'npm install -g newman newman-reporter-html'
             }
         }
 
         stage('Run Postman Tests') {
             steps {
-                echo '📬 Exécution des tests Postman via Newman...'
-                dir('Phase3_Tests_API/postman_collections') {
+                dir('Phase3_Tests_API') {
                     sh '''
-                    newman run Reqres_Collection.json \
-                        -e Reqres_Env.json \
-                        -r cli,html \
-                        --reporter-html-export newman_reports/report.html
+                    newman run postman_collections/Reqres_Collection.json \
+                    -e postman_collections/Reqres_Env.json \
+                    -r cli,html \
+                    --reporter-html-export reports/reqres-report.html
                     '''
-                }
-            }
-            post {
-                always {
-                    archiveArtifacts artifacts: 'Phase3_Tests_API/postman_collections/newman_reports/report.html', fingerprint: true
                 }
             }
         }
@@ -54,10 +30,13 @@ pipeline {
 
     post {
         always {
-            echo '✅ Pipeline terminé !'
+            archiveArtifacts artifacts: 'Phase3_Tests_API/reports/*.html', allowEmptyArchive: true
         }
         failure {
-            echo '❌ Le pipeline a échoué.'
+            echo '❌ Tests échoués. Vérifie le rapport HTML dans les artefacts Jenkins.'
+        }
+        success {
+            echo '✅ Tous les tests Postman ont réussi.'
         }
     }
 }
