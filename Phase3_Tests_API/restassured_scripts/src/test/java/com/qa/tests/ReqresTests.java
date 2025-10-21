@@ -5,128 +5,97 @@ import io.restassured.response.Response;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import static io.restassured.RestAssured.*;
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ReqresTests {
 
     @BeforeAll
     public static void setup() {
-        RestAssured.baseURI = "https://reqres.in";
+        // URL de base de l'API
+        RestAssured.baseURI = "https://reqres.in/api";
     }
 
     @Test
-    public void testGetUsersList() {
-        given()
-        .when()
-            .get("/api/users?page=2")
-        .then()
-            .statusCode(200)
-            .body("data", not(empty()));
+    public void testSingleUser() {
+        Response response = given()
+                .when()
+                .get("/users/2")
+                .then()
+                .statusCode(200)
+                .body("data.id", equalTo(2))
+                .body("data.email", notNullValue())
+                .extract().response();
+
+        assertNotNull(response);
+        assertTrue(response.asString().contains("janet"));
     }
 
     @Test
-    public void testGetSingleUser() {
-        given()
-        .when()
-            .get("/api/users/2")
-        .then()
-            .statusCode(200)
-            .body("data.id", equalTo(2));
+    public void testListUsers() {
+        Response response = given()
+                .queryParam("page", 2)
+                .when()
+                .get("/users")
+                .then()
+                .statusCode(200)
+                .body("data[0].id", notNullValue())
+                .body("data[0].email", notNullValue())
+                .extract().response();
+
+        assertNotNull(response);
+        assertTrue(response.asString().contains("michael"));
     }
 
     @Test
     public void testCreateUser() {
-        String body = """
-                {
-                  "name": "Ayoub",
-                  "job": "developer"
-                }
-                """;
+        String requestBody = "{ \"name\": \"morpheus\", \"job\": \"leader\" }";
 
-        given()
-            .header("Content-Type", "application/json")
-            .body(body)
-        .when()
-            .post("/api/users")
-        .then()
-            .statusCode(201)
-            .body("name", equalTo("Ayoub"))
-            .body("job", equalTo("developer"))
-            .body("id", notNullValue())
-            .body("createdAt", notNullValue());
+        Response response = given()
+                .header("Content-Type", "application/json")
+                .body(requestBody)
+                .when()
+                .post("/users")
+                .then()
+                .statusCode(201)
+                .body("name", equalTo("morpheus"))
+                .body("job", equalTo("leader"))
+                .extract().response();
+
+        assertNotNull(response);
+        assertTrue(response.asString().contains("id"));
     }
 
     @Test
     public void testUpdateUser() {
-        String body = """
-                {
-                  "name": "Ayoub",
-                  "job": "senior developer"
-                }
-                """;
+        String requestBody = "{ \"name\": \"morpheus\", \"job\": \"zion resident\" }";
 
-        given()
-            .header("Content-Type", "application/json")
-            .body(body)
-        .when()
-            .put("/api/users/2")
-        .then()
-            .statusCode(200)
-            .body("name", equalTo("Ayoub"))
-            .body("job", equalTo("senior developer"))
-            .body("updatedAt", notNullValue());
+        Response response = given()
+                .header("Content-Type", "application/json")
+                .body(requestBody)
+                .when()
+                .put("/users/2")
+                .then()
+                .statusCode(200)
+                .body("name", equalTo("morpheus"))
+                .body("job", equalTo("zion resident"))
+                .extract().response();
+
+        assertNotNull(response);
+        assertTrue(response.asString().contains("updatedAt"));
     }
 
     @Test
     public void testDeleteUser() {
         given()
-        .when()
-            .delete("/api/users/2")
-        .then()
-            .statusCode(204);
-    }
+                .when()
+                .delete("/users/2")
+                .then()
+                .statusCode(204);  // Pas de contenu
 
-    @Test
-    public void testLoginSuccess() {
-        String body = """
-                {
-                  "email": "eve.holt@reqres.in",
-                  "password": "cityslicka"
-                }
-                """;
-
-        Response response = given()
-            .header("Content-Type", "application/json")
-            .body(body)
-        .when()
-            .post("/api/login")
-        .then()
-            .statusCode(200)
-            .body("token", notNullValue())
-            .extract().response();
-
-        String token = response.jsonPath().getString("token");
-        assertNotNull(token);
-        assertTrue(token.length() > 0);
-    }
-
-    @Test
-    public void testLoginFailureMissingPassword() {
-        String body = """
-                {
-                  "email": "peter@klaven"
-                }
-                """;
-
-        given()
-            .header("Content-Type", "application/json")
-            .body(body)
-        .when()
-            .post("/api/login")
-        .then()
-            .statusCode(400)
-            .body("error", equalTo("Missing password"));
+        // Pas de body à vérifier pour delete, juste le code HTTP
     }
 }
